@@ -1,20 +1,14 @@
-from flask import Flask, session, render_template, request, redirect
-from flask_sqlalchemy import SQLAlchemy
-from config import config
-import pyrebase
+from flask import Flask,Blueprint, session, render_template, request, redirect
+from api.firebase_config import auth
 
-
-app = Flask(__name__)
-
-
-firebase = pyrebase.initialize_app(config)
-auth = firebase.auth()
-app.secret_key = 'secret'
-
-@app.route('/', methods =['POST', 'GET'])
+route_blueprint = Blueprint('route_blueprint', __name__)
+app = Flask(__name__, template_folder='template')
+@route_blueprint.route('/', methods =['POST', 'GET'])
 def home():
     if('user' in session):
-        return 'Hi, {} </br><a href="/logout"><button>logout</button></a>'.format(session['user'])
+       # return 'Hi, {} </br><a href="/logout"><button>logout</button></a>'.format(session['user'])
+       username = session['user']
+       return render_template('dashboard.html', u=username)
     
     if request.method == 'POST':
         email =request.form.get('email')
@@ -26,7 +20,7 @@ def home():
             return 'failed'
     return render_template('home.html')
 
-@app.route('/signup', methods =['POST', 'GET'])
+@route_blueprint.route('/signup', methods =['POST', 'GET'])
 def signup():
     
     if request.method == 'POST':
@@ -40,13 +34,10 @@ def signup():
             return 'failed'
     return render_template('signup.html')
 
-@app.route('/logout')
+@route_blueprint.route('/logout')
 def logout():
-    session.pop('user')
-    return redirect('/')
-
-
-
-
-if __name__ == '__main__':
-    app.run(port=1111)
+    if('user' in session):
+        session.pop('user')
+        return redirect('/')
+    else:
+        return 'login first to logout, please'
