@@ -1,2 +1,10 @@
 .venv
 config.py
+__pychache__
+.idea/
+.vscode/
+dist/
+.coverage*
+htmlcov/
+.tox/
+docs/_build/
