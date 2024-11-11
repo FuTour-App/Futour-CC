@@ -1,6 +1,6 @@
-.venv
-config.py
-__pychache__
+.venv*/
+venv*/
+__pycache__
 .idea/
 .vscode/
 dist/
@@ -8,3 +8,6 @@ dist/
 htmlcov/
 .tox/
 docs/_build/
+.env
+api/__pycache__/
+api/services/__pycache__/
