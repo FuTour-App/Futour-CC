@@ -14,4 +14,3 @@ config = {
     'signInFlow': os.environ.get('FLOW'),
     'databaseURL': os.environ.get('DB_URL')
 }
-print(config)
