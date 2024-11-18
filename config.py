@@ -3,7 +3,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-config = {
+FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+DEBUG = os.environ.get('DEBUG', True)
+SECRET_KEY = os.environ.get('SECRET_KEY', 'veryverysuperultrasecret')
+
+FIREBASE_CONFIG = {
     'apiKey': os.environ.get('API_KEY'),
     'authDomain': os.environ.get('AUTH_DOMAIN'),
     'projectId': os.environ.get('PROJECT_ID'),
@@ -11,6 +15,9 @@ config = {
     'messagingSenderId': os.environ.get('MSG_ID'),
     'appId': os.environ.get('APP_ID'),
     'measurementId': os.environ.get('MEASURE_ID'),
-    'signInFlow': os.environ.get('FLOW'),
     'databaseURL': os.environ.get('DB_URL')
 }
+
+SESSION_TYPE = 'filesystem'
+SESSION_PERMANENT = False
+PERMANENT_SESSION_LIFETIME = 1800 
