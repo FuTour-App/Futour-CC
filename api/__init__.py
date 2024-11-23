@@ -1,10 +1,33 @@
 from flask import Flask
-from api.firebase_config import auth
-from api.route import route_blueprint
+from flask_session import Session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from api.routes.auth import auth_bp
+from flask_cors import CORS
 
-def create_app():
+session = Session()
+
+def create_app(config_file: str = '../config.py') -> Flask:
     app = Flask(__name__)
-    app.secret_key = 'secret'
-    app.register_blueprint(route_blueprint)
+    CORS(app)
+    app.config.from_pyfile(config_file)
+    app.secret_key = app.config['SECRET_KEY']
+    
+    session.init_app(app)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"]
+    )
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
     
     return app
