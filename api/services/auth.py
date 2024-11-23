@@ -1,71 +1,134 @@
-from flask import session, render_template, request, redirect, url_for, flash
-from typing import Union
-from flask.wrappers import Response
+from flask import jsonify
+from http import HTTPStatus
 from api.utils.firebase import auth, db
 from api.models.user import User
-from flask_login import login_user
+from api.schemas.auth import LoginSchema, SignupSchema
+import jwt
+import datetime
+from flask import current_app
+from pydantic import ValidationError
 
 class AuthService:
-    def login(self) -> Union[str, Response]:
-        if request.method == 'POST':
-            email: str = request.form.get('email', '')
-            password: str = request.form.get('password', '')
-            
-            try:
-                user = auth.sign_in_with_email_and_password(email, password)
-                user_id = user['localId']
-                user_obj = User.get_by_id(user_id)
-                
-                if not user_obj:
-                    raise ValueError("User not found in database")
-                
-                login_user(user_obj)
+    def login(self, data: dict) -> tuple[dict, int]:
+        try:
+            schema = LoginSchema(**data)
+        except ValidationError as e:
+            return jsonify({'status': 'error', 'message': e.errors()}), HTTPStatus.BAD_REQUEST
+        
+        try:
+            user = auth.sign_in_with_email_and_password(
+                schema.email, 
+                schema.password,
+            )
+            user_id = user['localId']
 
-                session['user'] = {
-                    "id": user_id,
-                    "email": user_obj.email,
-                    "username": user_obj.username
+            db.child("users").child(user_id).update({
+            "last_login": {".sv": "timestamp"}
+            })
+
+            user_obj = User.get_by_id(user_id)
+            
+            if not user_obj:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'User not found in database'
+                }), HTTPStatus.NOT_FOUND
+            
+            token = jwt.encode({
+                'user_id': user_id,
+                'email': user_obj.email,
+                'exp': datetime.datetime.now() + datetime.timedelta(days=1)
+            }, current_app.config['SECRET_KEY'])
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'access_token': token,
+                    'token_type': 'Bearer',
+                    'user': {
+                        'user_id': user_id,
+                        'email': user_obj.email,
+                        'username': user_obj.username,
+                        'last_login': user_obj.last_login,
+
+                    }
                 }
-                return redirect(url_for('auth.dashboard'))
-            except Exception as e:
-                flash(f"Login failed: {str(e)}", 'error')
-                return render_template('auth/login.html')
-                
-        return render_template('auth/login.html')
-
-    def signup(self) -> Union[str, Response]:
-        if request.method == 'POST':
-            username: str = request.form.get('username', '')
-            email: str = request.form.get('email', '')
-            password: str = request.form.get('password', '')
+            }), HTTPStatus.OK
             
-            try:
-                user = auth.create_user_with_email_and_password(email, password)
-                user_id = user['localId']
-                
-                new_user = User(user_id, username, email)
-                db.child("users").child(user_id).set({
-                    "username": new_user.username,
-                    "email": new_user.email
-                })
-                flash('Account created successfully!', 'success')
-                return redirect(url_for('auth.login'))
-            except Exception as e:
-                flash(f"Signup failed: {str(e)}", 'error')
-                return render_template('auth/signup.html')
-                
-        return render_template('auth/signup.html')
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid credentials'
+            }), HTTPStatus.UNAUTHORIZED
 
-    def dashboard(self) -> Union[str, Response]:
-        if 'user' not in session:
-            return redirect(url_for('auth.login'))
-            
-        username = session['user']['username']
-        return render_template('auth/dashboard.html', username=username)
 
-    def logout(self) -> Union[str, Response]:
-        if 'user' not in session:
-            return {'error': 'Not logged in'}, 401
+    def signup(self, data: dict) -> tuple[dict, int]:
+        try:
+            schema = SignupSchema(**data)
+        except ValidationError as e:
+            return jsonify({'status': 'error', 'message': e.errors()}), HTTPStatus.BAD_REQUEST
+
+        try:
+            user = auth.create_user_with_email_and_password(
+                schema.email, 
+                schema.password,
+            )
+            user_id = user['localId']
             
-        session.pop('user')
-        return redirect(url_for('auth.login'))
+            user_data = {
+                "username": schema.username,
+                "email": schema.email,
+                "created_at": {".sv": "timestamp"},
+                "last_login": {".sv": "timestamp"}
+            }
+            
+            db.child("users").child(user_id).set(user_data)
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'User created successfully'
+            }), HTTPStatus.CREATED
+            
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': str(e)
+            }), HTTPStatus.BAD_REQUEST
+        
+    def get_current_user(self, token: str) -> tuple[dict, int]:
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            user = User.get_by_id(payload['user_id'])
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'user_id': user.id,
+                    'email': user.email,
+                    'username': user.username
+                }
+            }), HTTPStatus.OK
+            
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                'status': 'error',
+                'message': 'Token has expired'
+            }), HTTPStatus.UNAUTHORIZED
+        except jwt.InvalidTokenError:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid token'
+            }), HTTPStatus.UNAUTHORIZED
+                
+
+    def logout(self, token: str) -> tuple[dict, int]:
+        try:
+            return jsonify({
+                'status': 'success',
+                'message': 'Token invalidated successfully'
+            }), HTTPStatus.OK
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': 'Error during logout'
+            }), HTTPStatus.BAD_REQUEST
