@@ -1,33 +1,33 @@
 from flask import Flask
-from flask_login import LoginManager
 from flask_session import Session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from api.routes.auth import auth_bp
-from api.models.user import User
-from typing import Optional
+from flask_cors import CORS
 
-login_manager = LoginManager()
 session = Session()
 
-@login_manager.user_loader
-def load_user(user_id: str) -> Optional[User]:
-    return User.get_by_id(user_id)
-
 def create_app(config_file: str = '../config.py') -> Flask:
-    """
-    Args:
-        config_file: Path to configuration file 
-    Returns:
-        Configured Flask application instance
-    """
     app = Flask(__name__)
+    CORS(app)
     app.config.from_pyfile(config_file)
-
     app.secret_key = app.config['SECRET_KEY']
     
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
     session.init_app(app)
-
     app.register_blueprint(auth_bp, url_prefix='/auth')
+
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"]
+    )
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
     
     return app

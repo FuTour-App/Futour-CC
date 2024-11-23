@@ -1,23 +1,28 @@
-﻿# Flask Firebase Authentication
+﻿# Flask Firebase Authentication API
 
-A Flask web application implementing user authentication using Firebase Authentication and Realtime Database.
+A secure REST API implementing token-based authentication using Flask, Firebase Authentication, and JWT tokens.
 
 ## Features
 
-- User registration and login
-- Session management
-- Firebase integration
-- Dashboard access control
-- Flash messages for user feedback
+- Token-based authentication with JWT
+- Firebase Authentication and Realtime Database integration
+- Rate limiting protection (200/day, 50/hour)
+- Input validation using Pydantic schemas
+- Secure password requirements
+- User session tracking
+- CORS support
+- Security headers
 
 ## Tech Stack
 
 - Flask
 - Firebase Authentication
 - Firebase Realtime Database
-- Flask-Login
-- Flask-Session
-- Python-dotenv
+- PyJWT
+- Pydantic
+- Flask-Limiter
+- Flask-CORS
+- Pyrebase
 
 ## Setup Instructions
 
@@ -61,10 +66,10 @@ flask --app app run --debug
 ```
 
 ## Avaliable Routes
-- `/auth/login` - User Login
-- `/auth/signup` - User Registration
-- `/auth/dashboard` - Dashboard
-- `/auth/logout` - User Logout
+- `POST /auth/login` - User Login
+- `POST /auth/signup` - User Registration
+- `GET /auth/me` - Get Current User Profile
+- `POST /auth/logout` - User Logout
 
 ## Firebase Setup
 1.  Create a Firebase project in the Firebase Console
