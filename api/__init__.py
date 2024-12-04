@@ -3,6 +3,7 @@ from flask_session import Session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from api.routes.auth import auth_bp
+from api.routes.profile import profile_bp
 from flask_cors import CORS
 
 session = Session()
@@ -15,6 +16,7 @@ def create_app(config_file: str = '../config.py') -> Flask:
     
     session.init_app(app)
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(profile_bp, url_prefix='/profile')
 
     limiter = Limiter(
         app=app,
