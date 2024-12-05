@@ -10,6 +10,6 @@ htmlcov/
 docs/_build/
 .env
 api/__pycache__
-api/services/
+
 flask_session
 .env.example
