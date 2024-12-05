@@ -12,3 +12,4 @@ docs/_build/
 api/__pycache__
 api/services/
 flask_session
+.env.example
