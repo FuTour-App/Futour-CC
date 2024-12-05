@@ -15,7 +15,7 @@ def get_current_user() -> Tuple[Dict, int]:
 
 @profile_bp.route('/edit', methods=['PATCH'])
 @verify_token()
-def edit_profile() -> Tuple[Dict, int]:
+def edit_user() -> Tuple[Dict, int]:
     token = request.headers.get('Authorization').split(" ")[1]
     data = request.get_json()
-    return profile_service.edit_profile(token, data)
+    return profile_service.edit_user(token, data)

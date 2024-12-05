@@ -32,7 +32,7 @@ class ProfileService:
                     'user_id': user.id,
                     'email': user.email,
                     'username': user.username,
-                    'avatar': user.avatar,
+                    
                 }
             }), HTTPStatus.OK
             
