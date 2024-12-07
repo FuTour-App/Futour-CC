@@ -9,6 +9,7 @@ htmlcov/
 .tox/
 docs/_build/
 .env
+.env.example
 api/__pycache__
 api/services/__pycache
 flask_session

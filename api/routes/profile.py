@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from typing import Tuple, Dict
 from api.services.profile import ProfileService
-from api.middlewares.json_validation import validate_json
+
 from api.middlewares.auth import verify_token
 
 profile_bp = Blueprint('profile', __name__)
