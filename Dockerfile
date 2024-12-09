@@ -3,6 +3,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 ENV HOST=0.0.0.0
+ENV PATH="/app/.venv/bin:$PATH"
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -17,7 +18,6 @@ RUN python3 -m venv .venv \
     && . .venv/bin/activate \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir flask \
     && pip install --no-cache-dir pydantic[email]
 
 COPY . .
