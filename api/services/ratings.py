@@ -63,3 +63,54 @@ class RatingsService:
                 'status': 'error',
                 'message': str(e)
             }), HTTPStatus.BAD_REQUEST
+        
+    def toggle_favorite(self, token: str, place_id: str) -> tuple[dict, int]:
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+            
+            # Check if already favorited
+            current_favorites = Ratings.get_user_favorites(user_id)
+            is_favorited = any(fav['place_id'] == place_id for fav in current_favorites)
+            
+            if is_favorited:
+                Ratings.remove_from_favorites(user_id, place_id)
+                message = "Place removed from favorites"
+            else:
+                Ratings.add_to_favorites(user_id, place_id)
+                message = "Place added to favorites"
+                
+            return jsonify({
+                'status': 'success',
+                'message': message
+            }), HTTPStatus.OK
+            
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                'status': 'error',
+                'message': 'Token has expired'
+            }), HTTPStatus.UNAUTHORIZED
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': str(e)
+            }), HTTPStatus.BAD_REQUEST
+
+    def get_favorites(self, token: str) -> tuple[dict, int]:
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+            favorites = Ratings.get_user_favorites(user_id)
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'favorites': favorites
+                }
+            }), HTTPStatus.OK
+            
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                'status': 'error',
+                'message': 'Token has expired'
+            }), HTTPStatus.UNAUTHORIZED
