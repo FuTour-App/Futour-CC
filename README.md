@@ -68,7 +68,6 @@ flask --app app run --debug
 ## Avaliable Routes (Authentication)
 - `POST /auth/login` - User Login
 - `POST /auth/signup` - User Registration
-- `GET /auth/me` - Get Current User Profile
 - `POST /auth/logout` - User Logout
 
 ## Available Routes (User)
@@ -79,6 +78,10 @@ flask --app app run --debug
 - `GET /places` - Get All Places
 - `GET /places/{place_id}` - Get Place by ID
 - `GET /places/category/{category}` - Get Places by Category. avaliable category(natural, historic, landmark, amenity, religion, waterway, sport)
+
+## Available Routes (Ratings and Favorites)
+- `POST /ratings/favorites/{place_id}` - Add Place to Favorites
+- `GET /ratings/favorites` - Get All Favorites
 
 ## Sample Responses
 ```json
@@ -110,7 +113,8 @@ flask --app app run --debug
         },
         "type": "Feature"
     },
-    ```
+```
+
 ## Firebase Setup
 1.  Create a Firebase project in the Firebase Console
 1. Enable Email/Password authentication

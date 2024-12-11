@@ -19,3 +19,15 @@ def add_rating(place_id: str) -> Tuple[Dict, HTTPStatus]:
     token = request.headers.get('Authorization').split(" ")[1]
     rating = request.json.get('rating')
     return ratings_service.add_rating(token, place_id, rating)
+
+@ratings_bp.route('/favorites/<string:place_id>', methods=['POST'])
+@verify_token()
+def toggle_favorite(place_id: str) -> Tuple[Dict, HTTPStatus]:
+    token = request.headers.get('Authorization').split(" ")[1]
+    return ratings_service.toggle_favorite(token, place_id)
+
+@ratings_bp.route('/favorites', methods=['GET'])
+@verify_token()
+def get_favorites() -> Tuple[Dict, HTTPStatus]:
+    token = request.headers.get('Authorization').split(" ")[1]
+    return ratings_service.get_favorites(token)

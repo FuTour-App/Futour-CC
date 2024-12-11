@@ -85,3 +85,35 @@ class Ratings:
             created_at=created_at
         )
         return rating.to_dict()
+    
+    @staticmethod
+    def add_to_favorites(user_id: str, place_id: str) -> Dict:
+        """
+        Adds a place to user's favorites list
+        """
+        timestamp = int(datetime.now().timestamp() * 1000)
+        favorite_data = {
+            'place_id': place_id,
+            'added_at': timestamp
+        }
+        
+        db.child("favorites").child(user_id).child(place_id).set(favorite_data)
+        return favorite_data
+
+    @staticmethod
+    def remove_from_favorites(user_id: str, place_id: str) -> bool:
+        """
+        Removes a place from user's favorites list
+        """
+        db.child("favorites").child(user_id).child(place_id).remove()
+        return True
+
+    @staticmethod
+    def get_user_favorites(user_id: str) -> List[Dict]:
+        """
+        Gets all favorite places for a user
+        """
+        favorites = db.child("favorites").child(user_id).get().val()
+        if favorites:
+            return [{'place_id': k, **v} for k, v in favorites.items()]
+        return []
